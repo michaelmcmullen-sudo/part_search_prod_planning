@@ -13,7 +13,7 @@
         table { border-collapse: collapse; width: 100%; font-size: 0.85rem; table-layout: auto; }
         th { 
             background-color: #005a9e; color: white; position: sticky; top: 0; 
-            padding: 10px; min-width: 160px; z-index: 10; text-align: left; 
+            padding: 10px; min-width: 170px; z-index: 10; text-align: left; 
         }
 
         .filter-btn {
@@ -22,11 +22,12 @@
         }
         .filter-btn:hover { background: rgba(255,255,255,0.4); }
 
+        /* Filter Popup */
         .filter-menu {
             position: fixed; background: white; border: 1px solid #ccc;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2); border-radius: 6px;
             padding: 12px; z-index: 1000; display: none; color: #333;
-            width: 240px; max-height: 400px; flex-direction: column;
+            width: 250px; max-height: 400px; flex-direction: column;
         }
         .filter-menu.active { display: flex; }
         .filter-search { width: 100%; margin-bottom: 10px; padding: 6px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
@@ -41,9 +42,17 @@
         .filter-actions { display: flex; justify-content: flex-end; margin-top: 12px; border-top: 1px solid #eee; padding-top: 10px; gap: 8px; }
         .filter-actions button { padding: 4px 12px; font-size: 0.8rem; margin: 0; }
 
-        td { border: 1px solid #eee; padding: 10px; white-space: normal; vertical-align: top; max-width: 350px; word-wrap: break-word; line-height: 1.4; }
+        /* Wrap Text Logic */
+        td { 
+            border: 1px solid #eee; padding: 10px; 
+            white-space: normal; vertical-align: top; 
+            max-width: 350px; word-wrap: break-word; line-height: 1.4; 
+        }
         tr:nth-child(even) { background-color: #fcfcfc; }
+        
         #status { font-size: 0.85rem; margin-top: 8px; color: #444; font-weight: bold; }
+        .btn-export { background-color: #28a745; color: white; border: none; }
+        .btn-export:hover { background-color: #218838; }
     </style>
 </head>
 <body>
@@ -51,13 +60,14 @@
     <div class="search-area">
         <div style="display: flex; gap: 15px; align-items: flex-end;">
             <div style="flex-grow: 1;">
-                <label>Global Filter (Part Number):</label>
-                <input list="partList" id="globalSearch" placeholder="Search primary column..." oninput="applyAllFilters()">
+                <label>Global Part Search:</label>
+                <input list="partList" id="globalSearch" placeholder="Type to filter first column..." oninput="applyAllFilters()">
                 <datalist id="partList"></datalist>
             </div>
-            <button onclick="resetAll()">Reset All Filters</button>
+            <button class="btn-export" onclick="exportToCSV()">Download CSV</button>
+            <button onclick="resetAll()">Reset All</button>
         </div>
-        <div id="status">Syncing with data...</div>
+        <div id="status">Loading...</div>
     </div>
 
     <div class="table-container">
