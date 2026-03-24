@@ -8,25 +8,44 @@
     <style>
         body { max-width: 98%; margin: 20px auto; }
         .search-area { background: #f0f4f8; padding: 20px; border-radius: 8px; border: 1px solid #d1d9e0; margin-bottom: 20px; }
+        
         .table-container { 
             overflow-x: auto; 
-            max-height: 70vh; 
+            max-height: 75vh; 
             border: 1px solid #ddd; 
             background: white;
         }
-        table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+
+        table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+        
         th { 
             background-color: #005a9e; 
             color: white; 
             position: sticky; 
             top: 0; 
             padding: 10px;
-            white-space: nowrap;
+            min-width: 140px;
+            vertical-align: top;
+            z-index: 10;
         }
+
+        /* Styling the Excel-style dropdowns */
+        .column-filter {
+            width: 100%;
+            margin-top: 8px;
+            font-size: 0.75rem;
+            padding: 2px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            color: #333;
+            background: white;
+        }
+
         td { border: 1px solid #eee; padding: 8px; white-space: nowrap; }
         tr:nth-child(even) { background-color: #f9f9f9; }
         tr:hover { background-color: #f1f7ff; }
-        #status { font-size: 0.8rem; margin-top: 8px; color: #555; }
+
+        #status { font-size: 0.8rem; margin-top: 8px; color: #555; font-weight: bold; }
         .controls { display: flex; gap: 10px; align-items: flex-end; }
         input { margin-bottom: 0 !important; }
     </style>
@@ -37,13 +56,13 @@
     <div class="search-area">
         <div class="controls">
             <div style="flex-grow: 1;">
-                <label>Filter by Part Number:</label>
-                <input list="partList" id="partNumber" placeholder="Start typing or select all..." oninput="searchData()">
+                <label>Global Part Search:</label>
+                <input list="partList" id="partNumber" placeholder="Type a part number..." oninput="applyAllFilters()">
                 <datalist id="partList"></datalist>
             </div>
-            <button onclick="resetFilters()">Reset</button>
+            <button onclick="resetFilters()">Clear All Filters</button>
         </div>
-        <div id="status">Initializing connection...</div>
+        <div id="status">Connecting to database...</div>
     </div>
 
     <div class="table-container">
