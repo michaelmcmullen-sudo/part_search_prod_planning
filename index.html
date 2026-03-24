@@ -6,38 +6,26 @@
     <title>BOM Material Explorer</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
     <style>
-        body { max-width: 98%; margin: 20px auto; font-family: system-ui, -apple-system, sans-serif; }
-        .search-container { background: #f0f4f8; padding: 20px; border-radius: 8px; border: 1px solid #d1d9e0; margin-bottom: 20px; }
-        .test-box { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #ccc; }
-        .table-wrapper { overflow-x: auto; border: 1px solid #ddd; background: white; border-radius: 4px; }
-        table { width: 100%; border-collapse: collapse; min-width: 1400px; }
-        th { background-color: #005a9e; color: white; white-space: nowrap; position: sticky; top: 0; }
+        body { max-width: 98%; margin: 20px auto; }
+        .search-container { background: #f0f4f8; padding: 25px; border-radius: 8px; border: 1px solid #d1d9e0; }
+        .table-wrapper { overflow-x: auto; margin-top: 20px; background: white; border: 1px solid #ddd; }
+        th { background-color: #005a9e; color: white; white-space: nowrap; }
         td, th { padding: 12px; border: 1px solid #ccc; font-size: 0.85rem; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .loading { display: none; color: #005a9e; font-weight: bold; margin-left: 10px; }
-        button.test-btn { background-color: #28a745; border-color: #28a745; }
+        .status-msg { font-size: 0.8rem; color: #555; margin-top: 5px; }
     </style>
 </head>
 <body>
     <h1>BOM Material Explorer</h1>
     
     <div class="search-container">
-        <div class="test-box">
-            <label><strong>1. Verify Connection (Live Test):</strong></label>
-            <div style="display: flex; gap: 10px; margin-top: 5px;">
-                <button class="test-btn" onclick="loadTestParts()">Fetch Sample Parts</button>
-                <select id="testDropdown" onchange="document.getElementById('partNumber').value = this.value" style="flex-grow: 1;">
-                    <option value="">-- Click button to load --</option>
-                </select>
-            </div>
+        <label><strong>Search by Part Number or Customer Material:</strong></label>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <input list="partList" id="partNumber" placeholder="Type to search..." style="flex-grow: 1;">
+            <datalist id="partList"></datalist>
+            
+            <button onclick="searchData()">View Data</button>
         </div>
-
-        <label for="partNumber"><strong>2. Manual Search:</strong></label>
-        <div style="display: flex; gap: 10px; margin-top: 5px;">
-            <input type="text" id="partNumber" placeholder="Enter Part Number (e.g. 148204011)" style="flex-grow: 1;">
-            <button onclick="searchData()">Search Data</button>
-            <span id="status" class="loading">⌛ Loading...</span>
-        </div>
+        <div id="status" class="status-msg">Initializing parts list...</div>
     </div>
 
     <div class="table-wrapper">
