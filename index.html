@@ -6,25 +6,36 @@
     <title>BOM Material Explorer</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
     <style>
-        body { max-width: 95%; margin: 20px auto; font-family: sans-serif; }
+        body { max-width: 95%; margin: 20px auto; }
         .search-container { background: #f0f4f8; padding: 20px; border-radius: 8px; border: 1px solid #d1d9e0; margin-bottom: 20px; }
-        .table-wrapper { overflow-x: auto; border: 1px solid #ddd; border-radius: 4px; }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        th { background-color: #005a9e; color: white; position: sticky; top: 0; }
-        td, th { padding: 10px; border: 1px solid #ccc; text-align: left; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
+        .test-zone { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #ccc; }
+        .table-wrapper { overflow-x: auto; border: 1px solid #ddd; }
+        table { width: 100%; border-collapse: collapse; min-width: 1200px; background: white; }
+        th { background-color: #005a9e; color: white; white-space: nowrap; }
+        td, th { padding: 10px; border: 1px solid #ccc; font-size: 0.85rem; }
         .loading { display: none; color: #005a9e; font-weight: bold; margin-left: 10px; }
+        .btn-test { background-color: #28a745; color: white; }
     </style>
 </head>
 <body>
     <h1>BOM Material Explorer</h1>
     
     <div class="search-container">
-        <label for="partNumber">Enter Header Material (Part Number):</label>
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <input type="text" id="partNumber" placeholder="e.g. 148204011" onkeypress="if(event.key==='Enter') searchData()">
+        <div class="test-zone">
+            <label><strong>Step 1: Verify Connection</strong></label>
+            <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+                <button class="btn-test" onclick="loadTestParts()">Fetch Top 10 Parts</button>
+                <select id="testDropdown" onchange="document.getElementById('partNumber').value = this.value" style="margin: 0; flex-grow: 1;">
+                    <option value="">-- No parts loaded --</option>
+                </select>
+            </div>
+        </div>
+
+        <label for="partNumber"><strong>Step 2: Search Part Number</strong></label>
+        <div style="display: flex; gap: 10px; margin-top: 5px;">
+            <input type="text" id="partNumber" placeholder="Paste Part Number here..." style="flex-grow: 1; margin: 0;">
             <button onclick="searchData()">View Data</button>
-            <span id="status" class="loading">Searching...</span>
+            <span id="status" class="loading">⌛ Processing...</span>
         </div>
     </div>
 
@@ -34,10 +45,6 @@
             <tbody id="tableBody"></tbody>
         </table>
     </div>
-
-    <script src="script.js"></script>
-</body>
-</html>
 
     <script src="script.js"></script>
 </body>
