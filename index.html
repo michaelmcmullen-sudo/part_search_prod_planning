@@ -16,7 +16,7 @@
             background: white;
         }
 
-        table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+        table { border-collapse: collapse; width: 100%; font-size: 0.85rem; table-layout: auto; }
         
         th { 
             background-color: #005a9e; 
@@ -24,12 +24,13 @@
             position: sticky; 
             top: 0; 
             padding: 10px;
-            min-width: 140px;
+            min-width: 150px; /* Ensures filters have room */
+            max-width: 300px;
             vertical-align: top;
             z-index: 10;
+            text-align: left;
         }
 
-        /* Styling the Excel-style dropdowns */
         .column-filter {
             width: 100%;
             margin-top: 8px;
@@ -41,7 +42,18 @@
             background: white;
         }
 
-        td { border: 1px solid #eee; padding: 8px; white-space: nowrap; }
+        /* WRAP TEXT LOGIC START */
+        td { 
+            border: 1px solid #eee; 
+            padding: 8px; 
+            word-wrap: break-word;       /* Standard wrap */
+            overflow-wrap: break-word;   /* Modern wrap */
+            white-space: normal;         /* Allows text to wrap to next line */
+            vertical-align: top;
+            max-width: 300px;            /* Prevents columns from getting too wide */
+        }
+        /* WRAP TEXT LOGIC END */
+
         tr:nth-child(even) { background-color: #f9f9f9; }
         tr:hover { background-color: #f1f7ff; }
 
