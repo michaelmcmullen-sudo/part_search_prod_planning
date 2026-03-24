@@ -1,12 +1,12 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbxxsvbelm0fJ4kcWXDVdHpwVzhg42c6lJ0DeO4IygG4K7JPDbbPldsuNXiJqZ8YJ0joKg/exec"; 
 
 let ALL_DATA = [];
+let ACTIVE_FILTERS = {}; // Stores { ColumnName: "SelectedValue" }
 
-// 1. Initial Load: Get everything
+// 1. Initial Load
 window.addEventListener('DOMContentLoaded', async () => {
     const status = document.getElementById('status');
     try {
-        status.innerText = "Downloading database...";
         const resp = await fetch(`${API_URL}?action=getAllData`);
         const data = await resp.json();
 
@@ -14,25 +14,14 @@ window.addEventListener('DOMContentLoaded', async () => {
 
         ALL_DATA = data;
         populateDatalist(data);
-        renderTable(data); // Show all by default
+        renderTable(data);
         
-        status.innerText = `Connected. ${data.length} items loaded.`;
+        status.innerText = `Database Synced: ${data.length} items loaded.`;
     } catch (err) {
         console.error(err);
-        status.innerText = "Error: Could not sync with Google Sheets.";
+        status.innerText = "Connection Error. Please check Deployment permissions.";
     }
 });
-
-function populateDatalist(data) {
-    const listEl = document.getElementById('partList');
-    const uniqueParts = [...new Set(data.map(item => Object.values(item)[0]))]; // Gets first column values
-    
-    uniqueParts.forEach(part => {
-        const opt = document.createElement('option');
-        opt.value = part;
-        listEl.appendChild(opt);
-    });
-}
 
 function renderTable(dataToDisplay) {
     const head = document.getElementById('tableHead');
@@ -40,32 +29,62 @@ function renderTable(dataToDisplay) {
     head.innerHTML = ""; body.innerHTML = "";
 
     if (dataToDisplay.length === 0) {
-        body.innerHTML = "<tr><td colspan='100%'>No matching results found.</td></tr>";
+        body.innerHTML = "<tr><td colspan='100%' style='text-align:center; padding:20px;'>No results match these filters.</td></tr>";
         return;
     }
 
-    // DYNAMIC COLUMN HIDING LOGIC
-    // Get all possible headers
-    const allHeaders = Object.keys(dataToDisplay[0]);
-    
-    // Filter headers to only those that have at least one valid value in the current result set
+    // Identify columns that actually have data in the current filtered set
+    const allHeaders = Object.keys(ALL_DATA[0]);
     const activeHeaders = allHeaders.filter(h => {
-        return dataToDisplay.some(row => {
-            const val = row[h];
-            return val !== "" && val !== null && val !== "-" && val !== undefined;
-        });
+        return dataToDisplay.some(row => row[h] !== "" && row[h] !== null && row[h] !== "-");
     });
 
-    // Create Headers
+    // Create Header Row with Dropdowns
     const trHead = document.createElement('tr');
     activeHeaders.forEach(h => {
         const th = document.createElement('th');
-        th.textContent = h;
+        
+        // Header Text
+        const title = document.createElement('div');
+        title.textContent = h;
+        th.appendChild(title);
+
+        // Filter Dropdown (Select)
+        const select = document.createElement('select');
+        select.className = "column-filter";
+        
+        const optAll = document.createElement('option');
+        optAll.value = "";
+        optAll.textContent = "(All)";
+        select.appendChild(optAll);
+
+        // Get unique values for this specific column from ALL_DATA
+        const uniqueValues = [...new Set(ALL_DATA.map(row => row[h]))]
+            .filter(v => v !== "" && v !== null && v !== "-")
+            .sort();
+
+        uniqueValues.forEach(val => {
+            const opt = document.createElement('option');
+            opt.value = val;
+            opt.textContent = val;
+            // Keep the dropdown selection active if it was previously chosen
+            if (ACTIVE_FILTERS[h] === String(val)) opt.selected = true;
+            select.appendChild(opt);
+        });
+
+        // Trigger filter change
+        select.onchange = (e) => {
+            if (e.target.value === "") delete ACTIVE_FILTERS[h];
+            else ACTIVE_FILTERS[h] = e.target.value;
+            applyAllFilters();
+        };
+
+        th.appendChild(select);
         trHead.appendChild(th);
     });
     head.appendChild(trHead);
 
-    // Create Rows
+    // Create Data Rows
     dataToDisplay.forEach(row => {
         const tr = document.createElement('tr');
         activeHeaders.forEach(h => {
@@ -77,28 +96,43 @@ function renderTable(dataToDisplay) {
     });
 }
 
-function searchData() {
-    const input = document.getElementById('partNumber').value.trim().toLowerCase();
-    const status = document.getElementById('status');
+function applyAllFilters() {
+    const searchText = document.getElementById('partNumber').value.trim().toLowerCase();
+    const firstColKey = Object.keys(ALL_DATA[0])[0];
 
-    if (!input) {
-        renderTable(ALL_DATA);
-        status.innerText = "Showing all data.";
-        return;
-    }
-
-    // Filter local data based on the first column (usually Part Number)
     const filtered = ALL_DATA.filter(row => {
-        const firstValue = String(Object.values(row)[0]).toLowerCase();
-        return firstValue.includes(input);
+        // 1. Check Global Search Input
+        const matchesSearch = String(row[firstColKey]).toLowerCase().includes(searchText);
+
+        // 2. Check all active Dropdown Filters
+        const matchesDropdowns = Object.keys(ACTIVE_FILTERS).every(header => {
+            return String(row[header]) === ACTIVE_FILTERS[header];
+        });
+
+        return matchesSearch && matchesDropdowns;
     });
 
     renderTable(filtered);
-    status.innerText = `Found ${filtered.length} matches. (Empty columns hidden)`;
+    
+    const status = document.getElementById('status');
+    status.innerText = `Showing ${filtered.length} matching rows.`;
 }
 
 function resetFilters() {
     document.getElementById('partNumber').value = "";
+    ACTIVE_FILTERS = {};
     renderTable(ALL_DATA);
-    document.getElementById('status').innerText = "All data restored.";
+    document.getElementById('status').innerText = "All filters cleared.";
+}
+
+function populateDatalist(data) {
+    const listEl = document.getElementById('partList');
+    listEl.innerHTML = "";
+    const firstColKey = Object.keys(data[0])[0];
+    const uniqueParts = [...new Set(data.map(item => item[firstColKey]))];
+    uniqueParts.forEach(part => {
+        const opt = document.createElement('option');
+        opt.value = part;
+        listEl.appendChild(opt);
+    });
 }
