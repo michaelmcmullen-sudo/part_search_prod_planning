@@ -3,27 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BOM Explorer</title>
+    <title>BOM Explorer Pro</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
     <style>
         body { max-width: 98%; margin: 20px auto; }
-        .search-area { background: #f0f4f8; padding: 20px; border-radius: 8px; border: 1px solid #d1d9e0; }
-        .table-container { overflow-x: auto; margin-top: 20px; background: white; border: 1px solid #ddd; }
-        th { background-color: #005a9e; color: white; position: sticky; top: 0; }
-        #status { font-size: 0.8rem; margin-top: 8px; font-weight: bold; }
+        .search-area { background: #f0f4f8; padding: 20px; border-radius: 8px; border: 1px solid #d1d9e0; margin-bottom: 20px; }
+        .table-container { 
+            overflow-x: auto; 
+            max-height: 70vh; 
+            border: 1px solid #ddd; 
+            background: white;
+        }
+        table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+        th { 
+            background-color: #005a9e; 
+            color: white; 
+            position: sticky; 
+            top: 0; 
+            padding: 10px;
+            white-space: nowrap;
+        }
+        td { border: 1px solid #eee; padding: 8px; white-space: nowrap; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        tr:hover { background-color: #f1f7ff; }
+        #status { font-size: 0.8rem; margin-top: 8px; color: #555; }
+        .controls { display: flex; gap: 10px; align-items: flex-end; }
+        input { margin-bottom: 0 !important; }
     </style>
 </head>
 <body>
     <h1>BOM Material Explorer</h1>
     
     <div class="search-area">
-        <label>Search Part Number or Cust Mat:</label>
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <input list="partList" id="partNumber" placeholder="Type to search..." style="flex-grow: 1;">
-            <datalist id="partList"></datalist>
-            <button onclick="searchData()">View Data</button>
+        <div class="controls">
+            <div style="flex-grow: 1;">
+                <label>Filter by Part Number:</label>
+                <input list="partList" id="partNumber" placeholder="Start typing or select all..." oninput="searchData()">
+                <datalist id="partList"></datalist>
+            </div>
+            <button onclick="resetFilters()">Reset</button>
         </div>
-        <div id="status">Checking connection...</div>
+        <div id="status">Initializing connection...</div>
     </div>
 
     <div class="table-container">
