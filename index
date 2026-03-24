@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOM Material Explorer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <style>
+        body { max-width: 1300px; margin: 20px auto; }
+        .search-container { background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 30px; }
+        .table-wrapper { overflow-x: auto; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; background: white; color: #333; }
+        th { background-color: #005a9e; color: white; white-space: nowrap; }
+        td, th { padding: 12px; border: 1px solid #e0e0e0; font-size: 0.9rem; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        .loading { display: none; font-weight: bold; color: #005a9e; margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <h1>BOM Material Explorer</h1>
+    
+    <div class="search-container">
+        <label for="partNumber">Enter Header Material (Part Number):</label>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="partNumber" placeholder="e.g. 148204011" style="flex-grow: 1;">
+            <button onclick="searchData()">View Data</button>
+        </div>
+        <span id="status" class="loading">Processing Data...</span>
+    </div>
+
+    <div class="table-wrapper">
+        <table id="dataTable">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
