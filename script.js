@@ -1,24 +1,18 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbxxsvbelm0fJ4kcWXDVdHpwVzhg42c6lJ0DeO4IygG4K7JPDbbPldsuNXiJqZ8YJ0joKg/exec"; 
 
 let ALL_DATA = [];
-let ACTIVE_FILTERS = {}; 
+let ACTIVE_FILTERS = {}; // Format: { "ColumnName": ["Val1", "Val2"] }
 
 window.addEventListener('DOMContentLoaded', async () => {
     const status = document.getElementById('status');
     try {
         const resp = await fetch(`${API_URL}?action=getAllData`);
-        const data = await resp.json();
-
-        if (data.error) throw new Error(data.error);
-
-        ALL_DATA = data;
-        populateDatalist(data);
-        renderTable(data);
-        
-        status.innerText = `Database Synced: ${data.length} items loaded.`;
+        ALL_DATA = await resp.json();
+        populateDatalist(ALL_DATA);
+        renderTable(ALL_DATA);
+        status.innerText = `Loaded ${ALL_DATA.length} items. Click the ⚙️ icon on headers to filter.`;
     } catch (err) {
-        console.error(err);
-        status.innerText = "Connection Error. Please check Deployment permissions.";
+        status.innerText = "Error loading data.";
     }
 });
 
@@ -28,48 +22,18 @@ function renderTable(dataToDisplay) {
     head.innerHTML = ""; body.innerHTML = "";
 
     if (dataToDisplay.length === 0) {
-        body.innerHTML = "<tr><td colspan='100%' style='text-align:center; padding:20px;'>No results match these filters.</td></tr>";
+        body.innerHTML = "<tr><td colspan='100%'>No results match.</td></tr>";
         return;
     }
 
-    const allHeaders = Object.keys(ALL_DATA[0]);
-    const activeHeaders = allHeaders.filter(h => {
-        return dataToDisplay.some(row => row[h] !== "" && row[h] !== null && row[h] !== "-");
-    });
+    const headers = Object.keys(ALL_DATA[0]);
+    // Hide columns that are empty in the current result set
+    const activeHeaders = headers.filter(h => dataToDisplay.some(r => r[h] && r[h] !== "-"));
 
     const trHead = document.createElement('tr');
     activeHeaders.forEach(h => {
         const th = document.createElement('th');
-        const title = document.createElement('div');
-        title.textContent = h;
-        th.appendChild(title);
-
-        const select = document.createElement('select');
-        select.className = "column-filter";
-        const optAll = document.createElement('option');
-        optAll.value = "";
-        optAll.textContent = "(All)";
-        select.appendChild(optAll);
-
-        const uniqueValues = [...new Set(ALL_DATA.map(row => row[h]))]
-            .filter(v => v !== "" && v !== null && v !== "-")
-            .sort();
-
-        uniqueValues.forEach(val => {
-            const opt = document.createElement('option');
-            opt.value = val;
-            opt.textContent = val;
-            if (ACTIVE_FILTERS[h] === String(val)) opt.selected = true;
-            select.appendChild(opt);
-        });
-
-        select.onchange = (e) => {
-            if (e.target.value === "") delete ACTIVE_FILTERS[h];
-            else ACTIVE_FILTERS[h] = e.target.value;
-            applyAllFilters();
-        };
-
-        th.appendChild(select);
+        th.innerHTML = `<span>${h}</span><button class="filter-btn" onclick="toggleFilterMenu(event, '${h}')">⚙️</button>`;
         trHead.appendChild(th);
     });
     head.appendChild(trHead);
@@ -85,37 +49,118 @@ function renderTable(dataToDisplay) {
     });
 }
 
+function toggleFilterMenu(event, colName) {
+    event.stopPropagation();
+    let menu = document.getElementById(`menu-${colName}`);
+    
+    // Close any other open menus
+    document.querySelectorAll('.filter-menu').forEach(m => m.classList.remove('active'));
+
+    if (!menu) {
+        menu = createFilterMenu(colName);
+    }
+
+    // Position menu under the button
+    const rect = event.target.getBoundingClientRect();
+    menu.style.top = (rect.bottom + window.scrollY) + "px";
+    menu.style.left = (rect.left + window.scrollX - 150) + "px";
+    menu.classList.add('active');
+}
+
+function createFilterMenu(colName) {
+    const pool = document.getElementById('filterPool');
+    const menu = document.createElement('div');
+    menu.id = `menu-${colName}`;
+    menu.className = "filter-menu";
+    
+    // Unique values for this column
+    const vals = [...new Set(ALL_DATA.map(r => String(r[colName] || "-")))].sort();
+
+    menu.innerHTML = `
+        <input type="text" class="filter-search" placeholder="Search..." oninput="filterCheckboxes('${colName}', this.value)">
+        <div class="checkbox-list" id="list-${colName}">
+            ${vals.map(v => `
+                <label class="checkbox-item">
+                    <input type="checkbox" value="${v}" ${ACTIVE_FILTERS[colName]?.includes(v) ? 'checked' : ''} onchange="updateFilter('${colName}')">
+                    <span>${v}</span>
+                </label>
+            `).join('')}
+        </div>
+        <div class="filter-actions">
+            <button onclick="clearColFilter('${colName}')">Clear</button>
+            <button onclick="closeMenus()">Close</button>
+        </div>
+    `;
+
+    pool.appendChild(menu);
+    return menu;
+}
+
+function filterCheckboxes(colName, query) {
+    const list = document.getElementById(`list-${colName}`);
+    const items = list.querySelectorAll('.checkbox-item');
+    items.forEach(item => {
+        const text = item.querySelector('span').textContent.toLowerCase();
+        item.style.display = text.includes(query.toLowerCase()) ? 'flex' : 'none';
+    });
+}
+
+function updateFilter(colName) {
+    const list = document.getElementById(`list-${colName}`);
+    const checked = Array.from(list.querySelectorAll('input:checked')).map(i => i.value);
+    
+    if (checked.length === 0) delete ACTIVE_FILTERS[colName];
+    else ACTIVE_FILTERS[colName] = checked;
+
+    applyAllFilters();
+}
+
 function applyAllFilters() {
-    const searchText = document.getElementById('partNumber').value.trim().toLowerCase();
-    const firstColKey = Object.keys(ALL_DATA[0])[0];
+    const globalQ = document.getElementById('globalSearch').value.toLowerCase();
+    const firstKey = Object.keys(ALL_DATA[0])[0];
 
     const filtered = ALL_DATA.filter(row => {
-        const matchesSearch = String(row[firstColKey]).toLowerCase().includes(searchText);
-        const matchesDropdowns = Object.keys(ACTIVE_FILTERS).every(header => {
-            return String(row[header]) === ACTIVE_FILTERS[header];
+        const matchesGlobal = String(row[firstKey]).toLowerCase().includes(globalQ);
+        const matchesMenus = Object.keys(ACTIVE_FILTERS).every(col => {
+            return ACTIVE_FILTERS[col].includes(String(row[col] || "-"));
         });
-        return matchesSearch && matchesDropdowns;
+        return matchesGlobal && matchesMenus;
     });
 
     renderTable(filtered);
-    document.getElementById('status').innerText = `Showing ${filtered.length} matching rows.`;
 }
 
-function resetFilters() {
-    document.getElementById('partNumber').value = "";
-    ACTIVE_FILTERS = {};
-    renderTable(ALL_DATA);
-    document.getElementById('status').innerText = "All filters cleared.";
+function clearColFilter(colName) {
+    delete ACTIVE_FILTERS[colName];
+    const menu = document.getElementById(`menu-${colName}`);
+    if (menu) {
+        menu.querySelectorAll('input[type="checkbox"]').forEach(i => i.checked = false);
+    }
+    applyAllFilters();
 }
+
+function resetAll() {
+    ACTIVE_FILTERS = {};
+    document.getElementById('globalSearch').value = "";
+    document.getElementById('filterPool').innerHTML = "";
+    applyAllFilters();
+}
+
+function closeMenus() {
+    document.querySelectorAll('.filter-menu').forEach(m => m.classList.remove('active'));
+}
+
+document.addEventListener('click', closeMenus);
+// Prevent menu clicks from closing themselves
+document.getElementById('filterPool').addEventListener('click', e => e.stopPropagation());
 
 function populateDatalist(data) {
     const listEl = document.getElementById('partList');
-    listEl.innerHTML = "";
-    const firstColKey = Object.keys(data[0])[0];
-    const uniqueParts = [...new Set(data.map(item => item[firstColKey]))];
-    uniqueParts.forEach(part => {
-        const opt = document.createElement('option');
-        opt.value = part;
-        listEl.appendChild(opt);
+    const firstKey = Object.keys(data[0])[0];
+    const unique = [...new Set(data.map(r => r[firstKey]))];
+    unique.forEach(p => {
+        const o = document.createElement('option');
+        o.value = p;
+        listEl.appendChild(o);
     });
 }
