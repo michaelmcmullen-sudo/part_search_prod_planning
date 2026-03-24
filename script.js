@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/YOUR_NEW_DEPLOYMENT_ID/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbxxsvbelm0fJ4kcWXDVdHpwVzhg42c6lJ0DeO4IygG4K7JPDbbPldsuNXiJqZ8YJ0joKg/exec"; 
 
 // Run as soon as the page loads to fill the search suggestions
 window.addEventListener('DOMContentLoaded', async () => {
