@@ -1,6 +1,33 @@
-// REPLACE THIS URL with your new "Anyone" deployment URL from Apps Script
+// PASTE YOUR GOOGLE DEPLOYMENT URL HERE
 const API_URL = "https://script.google.com/macros/s/AKfycbxxsvbelm0fJ4kcWXDVdHpwVzhg42c6lJ0DeO4IygG4K7JPDbbPldsuNXiJqZ8YJ0joKg/exec";
 
+// Verification Function: Tests the link and fills the dropdown
+async function loadTestParts() {
+    const dropdown = document.getElementById('testDropdown');
+    dropdown.innerHTML = '<option>Connecting...</option>';
+    
+    try {
+        const response = await fetch(`${API_URL}?action=getTopTen`);
+        const data = await response.json();
+        
+        if (data.error) throw new Error(data.error);
+
+        dropdown.innerHTML = '<option value="">-- Select a discovered part --</option>';
+        data.parts.forEach(part => {
+            const opt = document.createElement('option');
+            opt.value = part;
+            opt.textContent = part;
+            dropdown.appendChild(opt);
+        });
+        alert("Connection Successful! 10 parts retrieved.");
+    } catch (err) {
+        console.error(err);
+        dropdown.innerHTML = '<option value="">Connection Failed</option>';
+        alert("Connection Error: Check if Web App is deployed to 'Anyone'.");
+    }
+}
+
+// Main Search Function
 async function searchData() {
     const input = document.getElementById('partNumber').value.trim();
     const status = document.getElementById('status');
@@ -8,31 +35,25 @@ async function searchData() {
     const body = document.getElementById('tableBody');
 
     if (!input) {
-        alert("Please enter a Part Number first.");
+        alert("Please enter or select a Part Number.");
         return;
     }
 
-    // UI Reset
     status.style.display = "inline";
-    head.innerHTML = "";
+    head.innerHTML = ""; 
     body.innerHTML = "";
 
     try {
         const response = await fetch(`${API_URL}?partNumber=${encodeURIComponent(input)}`);
-        
-        if (!response.ok) throw new Error("Network response was not ok");
-        
         const data = await response.json();
 
         if (data.error) {
-            alert("System Message: " + data.error);
+            alert(data.error);
             return;
         }
 
-        // Build Table
+        // 1. Generate Headers
         const columns = Object.keys(data[0]);
-
-        // Headers
         const headerRow = document.createElement('tr');
         columns.forEach(col => {
             const th = document.createElement('th');
@@ -41,7 +62,7 @@ async function searchData() {
         });
         head.appendChild(headerRow);
 
-        // Rows
+        // 2. Generate Rows
         data.forEach(item => {
             const tr = document.createElement('tr');
             columns.forEach(col => {
@@ -54,7 +75,7 @@ async function searchData() {
 
     } catch (err) {
         console.error("Fetch Error:", err);
-        alert("Connection Error. Ensure the Google Script is deployed to 'Anyone' and the URL is correct.");
+        alert("Network Error. Check console for details.");
     } finally {
         status.style.display = "none";
     }
