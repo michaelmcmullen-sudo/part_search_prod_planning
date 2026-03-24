@@ -11,26 +11,28 @@ async function searchData() {
         return;
     }
 
-    // Reset and show loader
     status.style.display = "inline";
     head.innerHTML = "";
     body.innerHTML = "";
 
     try {
-        // Fetch data from your Google Web App
-        const response = await fetch(`${API_URL}?partNumber=${input}`);
+        const response = await fetch(`${API_URL}?partNumber=${encodeURIComponent(input)}`);
         const data = await response.json();
 
         if (data.error) {
             alert(data.error);
-            status.style.display = "none";
             return;
         }
 
-        // 1. Get headers from the first object returned
+        if (data.length === 0) {
+            alert("No data returned for this part number.");
+            return;
+        }
+
+        // Get headers from the first object
         const columns = Object.keys(data[0]);
 
-        // 2. Create Header Row
+        // Create Header Row
         const headerRow = document.createElement('tr');
         columns.forEach(col => {
             const th = document.createElement('th');
@@ -39,12 +41,12 @@ async function searchData() {
         });
         head.appendChild(headerRow);
 
-        // 3. Create Data Rows
+        // Create Data Rows
         data.forEach(item => {
             const tr = document.createElement('tr');
             columns.forEach(col => {
                 const td = document.createElement('td');
-                td.textContent = item[col] || ""; // Shows empty string if data is missing
+                td.textContent = item[col] || "";
                 tr.appendChild(td);
             });
             body.appendChild(tr);
@@ -52,7 +54,7 @@ async function searchData() {
 
     } catch (err) {
         console.error(err);
-        alert("Error connecting to Google Sheets. Ensure you deployed as 'Anyone'.");
+        alert("Connection Error. Check your internet or Google Apps Script deployment permissions.");
     } finally {
         status.style.display = "none";
     }
