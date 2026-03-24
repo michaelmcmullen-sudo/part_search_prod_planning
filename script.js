@@ -1,26 +1,28 @@
-const API_URL = "YOUR_NEW_DEPLOYMENT_URL"; 
+const API_URL = "https://script.google.com/macros/s/YOUR_NEW_DEPLOYMENT_ID/exec"; 
 
-// 1. Auto-load the search list on page load
-window.onload = async () => {
-    const dataList = document.getElementById('partList');
+// Run as soon as the page loads to fill the search suggestions
+window.addEventListener('DOMContentLoaded', async () => {
+    const listEl = document.getElementById('partList');
     const status = document.getElementById('status');
     
     try {
-        const response = await fetch(`${API_URL}?action=getSearchList`);
-        const data = await response.json();
+        const resp = await fetch(`${API_URL}?action=getSearchList`);
+        const result = await resp.json();
         
-        data.parts.forEach(item => {
-            const option = document.createElement('option');
-            option.value = item.id; // Search by the ID (Part Number)
-            option.textContent = item.label; // Show the user "Part | Cust Mat"
-            dataList.appendChild(option);
+        if (result.error) throw new Error(result.error);
+
+        result.parts.forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item.value;    // This is what gets sent to search
+            opt.label = item.label;    // This is what the user sees
+            listEl.appendChild(opt);
         });
-        status.innerText = `System Ready: ${data.parts.length} parts loaded.`;
+        status.innerText = `Connected: ${result.parts.length} parts available.`;
     } catch (err) {
-        status.innerText = "Error loading parts list.";
-        console.error(err);
+        console.error("Initialization Error:", err);
+        status.innerText = "Error: Could not load parts list. Check API URL and Permissions.";
     }
-};
+});
 
 async function searchData() {
     const input = document.getElementById('partNumber').value.trim();
@@ -28,14 +30,14 @@ async function searchData() {
     const body = document.getElementById('tableBody');
     const status = document.getElementById('status');
 
-    if (!input) return;
+    if (!input) return alert("Please select or enter a part number.");
 
-    status.innerText = "Fetching data...";
+    status.innerText = "Searching...";
     head.innerHTML = ""; body.innerHTML = "";
 
     try {
-        const response = await fetch(`${API_URL}?partNumber=${encodeURIComponent(input)}`);
-        const data = await response.json();
+        const resp = await fetch(`${API_URL}?partNumber=${encodeURIComponent(input)}`);
+        const data = await resp.json();
 
         if (data.error) {
             alert(data.error);
@@ -43,29 +45,28 @@ async function searchData() {
             return;
         }
 
-        // The API now only sends headers that have data
-        const columns = Object.keys(data[0]);
-        
-        const headerRow = document.createElement('tr');
-        columns.forEach(col => {
+        const cols = Object.keys(data[0]);
+        const trHead = document.createElement('tr');
+        cols.forEach(c => {
             const th = document.createElement('th');
-            th.textContent = col;
-            headerRow.appendChild(th);
+            th.textContent = c;
+            trHead.appendChild(th);
         });
-        head.appendChild(headerRow);
+        head.appendChild(trHead);
 
-        data.forEach(item => {
+        data.forEach(row => {
             const tr = document.createElement('tr');
-            columns.forEach(col => {
+            cols.forEach(c => {
                 const td = document.createElement('td');
-                td.textContent = item[col] || "-";
+                td.textContent = row[c] || "-";
                 tr.appendChild(td);
             });
             body.appendChild(tr);
         });
-        status.innerText = "Displaying results.";
+        status.innerText = "Done.";
     } catch (err) {
-        alert("Search failed.");
+        console.error("Search Error:", err);
+        alert("Failed to retrieve data.");
         status.innerText = "Ready.";
     }
 }
