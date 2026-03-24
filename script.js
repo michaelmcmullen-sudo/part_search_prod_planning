@@ -1,7 +1,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbxxsvbelm0fJ4kcWXDVdHpwVzhg42c6lJ0DeO4IygG4K7JPDbbPldsuNXiJqZ8YJ0joKg/exec"; 
 
 let ALL_DATA = [];
-let ACTIVE_FILTERS = {}; // Format: { "ColumnName": ["Val1", "Val2"] }
+let ACTIVE_FILTERS = {}; 
 
 window.addEventListener('DOMContentLoaded', async () => {
     const status = document.getElementById('status');
@@ -10,9 +10,9 @@ window.addEventListener('DOMContentLoaded', async () => {
         ALL_DATA = await resp.json();
         populateDatalist(ALL_DATA);
         renderTable(ALL_DATA);
-        status.innerText = `Loaded ${ALL_DATA.length} items. Click the ⚙️ icon on headers to filter.`;
+        status.innerText = `Database Ready: ${ALL_DATA.length} parts online.`;
     } catch (err) {
-        status.innerText = "Error loading data.";
+        status.innerText = "Connection failed. Check API permissions.";
     }
 });
 
@@ -22,18 +22,20 @@ function renderTable(dataToDisplay) {
     head.innerHTML = ""; body.innerHTML = "";
 
     if (dataToDisplay.length === 0) {
-        body.innerHTML = "<tr><td colspan='100%'>No results match.</td></tr>";
+        body.innerHTML = "<tr><td colspan='100%' style='text-align:center; padding:40px;'>No items match the selected filters.</td></tr>";
         return;
     }
 
     const headers = Object.keys(ALL_DATA[0]);
-    // Hide columns that are empty in the current result set
-    const activeHeaders = headers.filter(h => dataToDisplay.some(r => r[h] && r[h] !== "-"));
+    // Hide columns that are empty across the current results
+    const activeHeaders = headers.filter(h => dataToDisplay.some(r => r[h] && r[h] !== "" && r[h] !== "-"));
 
     const trHead = document.createElement('tr');
     activeHeaders.forEach(h => {
         const th = document.createElement('th');
-        th.innerHTML = `<span>${h}</span><button class="filter-btn" onclick="toggleFilterMenu(event, '${h}')">⚙️</button>`;
+        // Indicator if filter is active
+        const indicator = ACTIVE_FILTERS[h] ? " ★" : "";
+        th.innerHTML = `<span>${h}${indicator}</span><button class="filter-btn" onclick="toggleFilterMenu(event, '${h}')">▼</button>`;
         trHead.appendChild(th);
     });
     head.appendChild(trHead);
@@ -51,19 +53,14 @@ function renderTable(dataToDisplay) {
 
 function toggleFilterMenu(event, colName) {
     event.stopPropagation();
-    let menu = document.getElementById(`menu-${colName}`);
-    
-    // Close any other open menus
     document.querySelectorAll('.filter-menu').forEach(m => m.classList.remove('active'));
 
-    if (!menu) {
-        menu = createFilterMenu(colName);
-    }
+    let menu = document.getElementById(`menu-${colName}`);
+    if (!menu) menu = createFilterMenu(colName);
 
-    // Position menu under the button
     const rect = event.target.getBoundingClientRect();
-    menu.style.top = (rect.bottom + window.scrollY) + "px";
-    menu.style.left = (rect.left + window.scrollX - 150) + "px";
+    menu.style.top = (rect.bottom + 5) + "px";
+    menu.style.left = Math.min(rect.left, window.innerWidth - 260) + "px";
     menu.classList.add('active');
 }
 
@@ -73,22 +70,26 @@ function createFilterMenu(colName) {
     menu.id = `menu-${colName}`;
     menu.className = "filter-menu";
     
-    // Unique values for this column
-    const vals = [...new Set(ALL_DATA.map(r => String(r[colName] || "-")))].sort();
+    const uniqueValues = [...new Set(ALL_DATA.map(r => String(r[colName] || "-")))].sort();
 
     menu.innerHTML = `
-        <input type="text" class="filter-search" placeholder="Search..." oninput="filterCheckboxes('${colName}', this.value)">
-        <div class="checkbox-list" id="list-${colName}">
-            ${vals.map(v => `
-                <label class="checkbox-item">
-                    <input type="checkbox" value="${v}" ${ACTIVE_FILTERS[colName]?.includes(v) ? 'checked' : ''} onchange="updateFilter('${colName}')">
-                    <span>${v}</span>
-                </label>
-            `).join('')}
+        <input type="text" class="filter-search" placeholder="Search values..." oninput="filterCheckboxes('${colName}', this.value)">
+        <div class="checkbox-list">
+            <label class="checkbox-item select-all-box">
+                <input type="checkbox" id="all-${colName}" onchange="toggleAll('${colName}', this.checked)" checked>
+                <span>(Select All)</span>
+            </label>
+            <div id="list-${colName}">
+                ${uniqueValues.map(v => `
+                    <label class="checkbox-item">
+                        <input type="checkbox" value="${v}" checked onchange="updateFilterState('${colName}')">
+                        <span>${v}</span>
+                    </label>
+                `).join('')}
+            </div>
         </div>
         <div class="filter-actions">
-            <button onclick="clearColFilter('${colName}')">Clear</button>
-            <button onclick="closeMenus()">Close</button>
+            <button onclick="closeMenus()">OK</button>
         </div>
     `;
 
@@ -96,21 +97,35 @@ function createFilterMenu(colName) {
     return menu;
 }
 
-function filterCheckboxes(colName, query) {
+function toggleAll(colName, isChecked) {
     const list = document.getElementById(`list-${colName}`);
-    const items = list.querySelectorAll('.checkbox-item');
+    list.querySelectorAll('input').forEach(i => i.checked = isChecked);
+    updateFilterState(colName);
+}
+
+function filterCheckboxes(colName, query) {
+    const items = document.getElementById(`list-${colName}`).querySelectorAll('.checkbox-item');
     items.forEach(item => {
         const text = item.querySelector('span').textContent.toLowerCase();
         item.style.display = text.includes(query.toLowerCase()) ? 'flex' : 'none';
     });
 }
 
-function updateFilter(colName) {
+function updateFilterState(colName) {
     const list = document.getElementById(`list-${colName}`);
-    const checked = Array.from(list.querySelectorAll('input:checked')).map(i => i.value);
+    const checkboxes = Array.from(list.querySelectorAll('input'));
+    const checked = checkboxes.filter(i => i.checked).map(i => i.value);
     
-    if (checked.length === 0) delete ACTIVE_FILTERS[colName];
-    else ACTIVE_FILTERS[colName] = checked;
+    // Update "Select All" indeterminate/checked state visually
+    const selectAllBtn = document.getElementById(`all-${colName}`);
+    selectAllBtn.checked = checked.length === checkboxes.length;
+
+    // If all are selected, we don't need a specific filter for this column
+    if (checked.length === checkboxes.length) {
+        delete ACTIVE_FILTERS[colName];
+    } else {
+        ACTIVE_FILTERS[colName] = checked;
+    }
 
     applyAllFilters();
 }
@@ -128,15 +143,7 @@ function applyAllFilters() {
     });
 
     renderTable(filtered);
-}
-
-function clearColFilter(colName) {
-    delete ACTIVE_FILTERS[colName];
-    const menu = document.getElementById(`menu-${colName}`);
-    if (menu) {
-        menu.querySelectorAll('input[type="checkbox"]').forEach(i => i.checked = false);
-    }
-    applyAllFilters();
+    document.getElementById('status').innerText = `Filtering: ${filtered.length} results found.`;
 }
 
 function resetAll() {
@@ -150,8 +157,8 @@ function closeMenus() {
     document.querySelectorAll('.filter-menu').forEach(m => m.classList.remove('active'));
 }
 
+// Global click listeners
 document.addEventListener('click', closeMenus);
-// Prevent menu clicks from closing themselves
 document.getElementById('filterPool').addEventListener('click', e => e.stopPropagation());
 
 function populateDatalist(data) {
