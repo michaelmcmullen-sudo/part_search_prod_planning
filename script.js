@@ -1,44 +1,37 @@
-// PASTE YOUR GOOGLE DEPLOYMENT URL HERE
-const API_URL = "https://script.google.com/macros/s/AKfycbxxsvbelm0fJ4kcWXDVdHpwVzhg42c6lJ0DeO4IygG4K7JPDbbPldsuNXiJqZ8YJ0joKg/exec";
+const API_URL = "YOUR_NEW_DEPLOYMENT_URL"; 
 
-// Verification: Pulls the top 10 parts from 'Data Sort'
-async function loadTestParts() {
-    const dropdown = document.getElementById('testDropdown');
-    dropdown.innerHTML = '<option>Connecting...</option>';
+// 1. Auto-load the search list on page load
+window.onload = async () => {
+    const dataList = document.getElementById('partList');
+    const status = document.getElementById('status');
     
     try {
-        const response = await fetch(`${API_URL}?action=getTopTen`);
+        const response = await fetch(`${API_URL}?action=getSearchList`);
         const data = await response.json();
         
-        if (data.error) throw new Error(data.error);
-
-        dropdown.innerHTML = '<option value="">-- Select a found part --</option>';
-        data.parts.forEach(part => {
-            const opt = document.createElement('option');
-            opt.value = part;
-            opt.textContent = part;
-            dropdown.appendChild(opt);
+        data.parts.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.id; // Search by the ID (Part Number)
+            option.textContent = item.label; // Show the user "Part | Cust Mat"
+            dataList.appendChild(option);
         });
-        alert("Success! Connection to 'Data Sort' is active.");
+        status.innerText = `System Ready: ${data.parts.length} parts loaded.`;
     } catch (err) {
+        status.innerText = "Error loading parts list.";
         console.error(err);
-        dropdown.innerHTML = '<option value="">Error</option>';
-        alert("Connection Failed. Check: 1. Deployment URL, 2. Tab Name 'Data Sort', 3. Permissions set to 'Anyone'.");
     }
-}
+};
 
-// Search: Fetches the specific part data
 async function searchData() {
     const input = document.getElementById('partNumber').value.trim();
-    const status = document.getElementById('status');
     const head = document.getElementById('tableHead');
     const body = document.getElementById('tableBody');
+    const status = document.getElementById('status');
 
-    if (!input) return alert("Please enter a Part Number.");
+    if (!input) return;
 
-    status.style.display = "inline";
-    head.innerHTML = ""; 
-    body.innerHTML = "";
+    status.innerText = "Fetching data...";
+    head.innerHTML = ""; body.innerHTML = "";
 
     try {
         const response = await fetch(`${API_URL}?partNumber=${encodeURIComponent(input)}`);
@@ -46,11 +39,13 @@ async function searchData() {
 
         if (data.error) {
             alert(data.error);
+            status.innerText = "Ready.";
             return;
         }
 
-        // Build Table Headers
+        // The API now only sends headers that have data
         const columns = Object.keys(data[0]);
+        
         const headerRow = document.createElement('tr');
         columns.forEach(col => {
             const th = document.createElement('th');
@@ -59,21 +54,18 @@ async function searchData() {
         });
         head.appendChild(headerRow);
 
-        // Build Table Rows
         data.forEach(item => {
             const tr = document.createElement('tr');
             columns.forEach(col => {
                 const td = document.createElement('td');
-                td.textContent = item[col];
+                td.textContent = item[col] || "-";
                 tr.appendChild(td);
             });
             body.appendChild(tr);
         });
-
+        status.innerText = "Displaying results.";
     } catch (err) {
-        console.error(err);
-        alert("Network Error. Check browser console (F12).");
-    } finally {
-        status.style.display = "none";
+        alert("Search failed.");
+        status.innerText = "Ready.";
     }
 }
