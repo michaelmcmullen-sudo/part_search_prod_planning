@@ -1,9 +1,8 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbxxsvbelm0fJ4kcWXDVdHpwVzhg42c6lJ0DeO4IygG4K7JPDbbPldsuNXiJqZ8YJ0joKg/exec"; 
 
 let ALL_DATA = [];
-let ACTIVE_FILTERS = {}; // Stores { ColumnName: "SelectedValue" }
+let ACTIVE_FILTERS = {}; 
 
-// 1. Initial Load
 window.addEventListener('DOMContentLoaded', async () => {
     const status = document.getElementById('status');
     try {
@@ -33,32 +32,25 @@ function renderTable(dataToDisplay) {
         return;
     }
 
-    // Identify columns that actually have data in the current filtered set
     const allHeaders = Object.keys(ALL_DATA[0]);
     const activeHeaders = allHeaders.filter(h => {
         return dataToDisplay.some(row => row[h] !== "" && row[h] !== null && row[h] !== "-");
     });
 
-    // Create Header Row with Dropdowns
     const trHead = document.createElement('tr');
     activeHeaders.forEach(h => {
         const th = document.createElement('th');
-        
-        // Header Text
         const title = document.createElement('div');
         title.textContent = h;
         th.appendChild(title);
 
-        // Filter Dropdown (Select)
         const select = document.createElement('select');
         select.className = "column-filter";
-        
         const optAll = document.createElement('option');
         optAll.value = "";
         optAll.textContent = "(All)";
         select.appendChild(optAll);
 
-        // Get unique values for this specific column from ALL_DATA
         const uniqueValues = [...new Set(ALL_DATA.map(row => row[h]))]
             .filter(v => v !== "" && v !== null && v !== "-")
             .sort();
@@ -67,12 +59,10 @@ function renderTable(dataToDisplay) {
             const opt = document.createElement('option');
             opt.value = val;
             opt.textContent = val;
-            // Keep the dropdown selection active if it was previously chosen
             if (ACTIVE_FILTERS[h] === String(val)) opt.selected = true;
             select.appendChild(opt);
         });
 
-        // Trigger filter change
         select.onchange = (e) => {
             if (e.target.value === "") delete ACTIVE_FILTERS[h];
             else ACTIVE_FILTERS[h] = e.target.value;
@@ -84,7 +74,6 @@ function renderTable(dataToDisplay) {
     });
     head.appendChild(trHead);
 
-    // Create Data Rows
     dataToDisplay.forEach(row => {
         const tr = document.createElement('tr');
         activeHeaders.forEach(h => {
@@ -101,21 +90,15 @@ function applyAllFilters() {
     const firstColKey = Object.keys(ALL_DATA[0])[0];
 
     const filtered = ALL_DATA.filter(row => {
-        // 1. Check Global Search Input
         const matchesSearch = String(row[firstColKey]).toLowerCase().includes(searchText);
-
-        // 2. Check all active Dropdown Filters
         const matchesDropdowns = Object.keys(ACTIVE_FILTERS).every(header => {
             return String(row[header]) === ACTIVE_FILTERS[header];
         });
-
         return matchesSearch && matchesDropdowns;
     });
 
     renderTable(filtered);
-    
-    const status = document.getElementById('status');
-    status.innerText = `Showing ${filtered.length} matching rows.`;
+    document.getElementById('status').innerText = `Showing ${filtered.length} matching rows.`;
 }
 
 function resetFilters() {
