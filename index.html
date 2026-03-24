@@ -3,33 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BOM Material Explorer</title>
+    <title>BOM Explorer</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
     <style>
         body { max-width: 98%; margin: 20px auto; }
-        .search-container { background: #f0f4f8; padding: 25px; border-radius: 8px; border: 1px solid #d1d9e0; }
-        .table-wrapper { overflow-x: auto; margin-top: 20px; background: white; border: 1px solid #ddd; }
-        th { background-color: #005a9e; color: white; white-space: nowrap; }
-        td, th { padding: 12px; border: 1px solid #ccc; font-size: 0.85rem; }
-        .status-msg { font-size: 0.8rem; color: #555; margin-top: 5px; }
+        .search-area { background: #f0f4f8; padding: 20px; border-radius: 8px; border: 1px solid #d1d9e0; }
+        .table-container { overflow-x: auto; margin-top: 20px; background: white; border: 1px solid #ddd; }
+        th { background-color: #005a9e; color: white; position: sticky; top: 0; }
+        #status { font-size: 0.8rem; margin-top: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
     <h1>BOM Material Explorer</h1>
     
-    <div class="search-container">
-        <label><strong>Search by Part Number or Customer Material:</strong></label>
+    <div class="search-area">
+        <label>Search Part Number or Cust Mat:</label>
         <div style="display: flex; gap: 10px; margin-top: 10px;">
             <input list="partList" id="partNumber" placeholder="Type to search..." style="flex-grow: 1;">
             <datalist id="partList"></datalist>
-            
             <button onclick="searchData()">View Data</button>
         </div>
-        <div id="status" class="status-msg">Initializing parts list...</div>
+        <div id="status">Checking connection...</div>
     </div>
 
-    <div class="table-wrapper">
-        <table id="dataTable">
+    <div class="table-container">
+        <table>
             <thead id="tableHead"></thead>
             <tbody id="tableBody"></tbody>
         </table>
