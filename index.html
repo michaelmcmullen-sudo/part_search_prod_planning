@@ -13,52 +13,54 @@
         table { border-collapse: collapse; width: 100%; font-size: 0.85rem; table-layout: auto; }
         th { 
             background-color: #005a9e; color: white; position: sticky; top: 0; 
-            padding: 10px; min-width: 150px; z-index: 10; text-align: left; 
+            padding: 10px; min-width: 160px; z-index: 10; text-align: left; 
         }
 
-        /* Filter Icon/Button */
         .filter-btn {
-            background: none; border: none; color: white; cursor: pointer;
-            float: right; font-size: 1rem; padding: 0 5px;
+            background: rgba(255,255,255,0.2); border: none; color: white; cursor: pointer;
+            float: right; font-size: 0.9rem; padding: 2px 6px; border-radius: 4px;
         }
-        .filter-btn:hover { color: #ffcc00; }
+        .filter-btn:hover { background: rgba(255,255,255,0.4); }
 
-        /* Filter Popup Menu */
         .filter-menu {
-            position: absolute; background: white; border: 1px solid #ccc;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-radius: 4px;
-            padding: 10px; z-index: 100; display: none; color: #333;
-            min-width: 200px; max-height: 300px; flex-direction: column;
+            position: fixed; background: white; border: 1px solid #ccc;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); border-radius: 6px;
+            padding: 12px; z-index: 1000; display: none; color: #333;
+            width: 240px; max-height: 400px; flex-direction: column;
         }
         .filter-menu.active { display: flex; }
-        .filter-search { width: 100%; margin-bottom: 10px; padding: 5px; box-sizing: border-box; }
-        .checkbox-list { overflow-y: auto; flex-grow: 1; max-height: 180px; border-top: 1px solid #eee; padding-top: 5px; }
-        .checkbox-item { display: flex; align-items: center; gap: 8px; padding: 2px 0; font-size: 0.8rem; cursor: pointer; }
-        .checkbox-item input { margin: 0; cursor: pointer; }
+        .filter-search { width: 100%; margin-bottom: 10px; padding: 6px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
         
-        .filter-actions { display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px solid #eee; padding-top: 8px; }
-        .filter-actions button { padding: 2px 8px; font-size: 0.75rem; }
+        .checkbox-list { overflow-y: auto; flex-grow: 1; max-height: 220px; border-top: 1px solid #eee; padding-top: 5px; }
+        .checkbox-item { display: flex; align-items: center; gap: 10px; padding: 4px 0; font-size: 0.85rem; cursor: pointer; }
+        .checkbox-item:hover { background: #f5f5f5; }
+        .checkbox-item input { margin: 0; width: 16px; height: 16px; cursor: pointer; }
+        
+        .select-all-box { font-weight: bold; border-bottom: 1px solid #eee; margin-bottom: 5px; padding-bottom: 5px; }
 
-        td { border: 1px solid #eee; padding: 8px; white-space: normal; vertical-align: top; max-width: 300px; word-wrap: break-word; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        #status { font-size: 0.8rem; margin-top: 8px; color: #555; font-weight: bold; }
+        .filter-actions { display: flex; justify-content: flex-end; margin-top: 12px; border-top: 1px solid #eee; padding-top: 10px; gap: 8px; }
+        .filter-actions button { padding: 4px 12px; font-size: 0.8rem; margin: 0; }
+
+        td { border: 1px solid #eee; padding: 10px; white-space: normal; vertical-align: top; max-width: 350px; word-wrap: break-word; line-height: 1.4; }
+        tr:nth-child(even) { background-color: #fcfcfc; }
+        #status { font-size: 0.85rem; margin-top: 8px; color: #444; font-weight: bold; }
     </style>
 </head>
 <body>
     <h1>BOM Material Explorer</h1>
     <div class="search-area">
-        <div style="display: flex; gap: 10px; align-items: flex-end;">
+        <div style="display: flex; gap: 15px; align-items: flex-end;">
             <div style="flex-grow: 1;">
-                <label>Global Search (Part Number):</label>
-                <input list="partList" id="globalSearch" placeholder="Type to search..." oninput="applyAllFilters()">
+                <label>Global Filter (Part Number):</label>
+                <input list="partList" id="globalSearch" placeholder="Search primary column..." oninput="applyAllFilters()">
                 <datalist id="partList"></datalist>
             </div>
             <button onclick="resetAll()">Reset All Filters</button>
         </div>
-        <div id="status">Connecting...</div>
+        <div id="status">Syncing with Google Sheets...</div>
     </div>
 
-    <div class="table-container" id="container">
+    <div class="table-container">
         <table>
             <thead id="tableHead"></thead>
             <tbody id="tableBody"></tbody>
