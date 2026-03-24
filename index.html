@@ -6,36 +6,37 @@
     <title>BOM Material Explorer</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
     <style>
-        body { max-width: 95%; margin: 20px auto; }
+        body { max-width: 98%; margin: 20px auto; font-family: system-ui, -apple-system, sans-serif; }
         .search-container { background: #f0f4f8; padding: 20px; border-radius: 8px; border: 1px solid #d1d9e0; margin-bottom: 20px; }
-        .test-zone { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #ccc; }
-        .table-wrapper { overflow-x: auto; border: 1px solid #ddd; }
-        table { width: 100%; border-collapse: collapse; min-width: 1200px; background: white; }
-        th { background-color: #005a9e; color: white; white-space: nowrap; }
-        td, th { padding: 10px; border: 1px solid #ccc; font-size: 0.85rem; }
+        .test-box { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #ccc; }
+        .table-wrapper { overflow-x: auto; border: 1px solid #ddd; background: white; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1400px; }
+        th { background-color: #005a9e; color: white; white-space: nowrap; position: sticky; top: 0; }
+        td, th { padding: 12px; border: 1px solid #ccc; font-size: 0.85rem; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
         .loading { display: none; color: #005a9e; font-weight: bold; margin-left: 10px; }
-        .btn-test { background-color: #28a745; color: white; }
+        button.test-btn { background-color: #28a745; border-color: #28a745; }
     </style>
 </head>
 <body>
     <h1>BOM Material Explorer</h1>
     
     <div class="search-container">
-        <div class="test-zone">
-            <label><strong>Step 1: Verify Connection</strong></label>
-            <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
-                <button class="btn-test" onclick="loadTestParts()">Fetch Top 10 Parts</button>
-                <select id="testDropdown" onchange="document.getElementById('partNumber').value = this.value" style="margin: 0; flex-grow: 1;">
-                    <option value="">-- No parts loaded --</option>
+        <div class="test-box">
+            <label><strong>1. Verify Connection (Live Test):</strong></label>
+            <div style="display: flex; gap: 10px; margin-top: 5px;">
+                <button class="test-btn" onclick="loadTestParts()">Fetch Sample Parts</button>
+                <select id="testDropdown" onchange="document.getElementById('partNumber').value = this.value" style="flex-grow: 1;">
+                    <option value="">-- Click button to load --</option>
                 </select>
             </div>
         </div>
 
-        <label for="partNumber"><strong>Step 2: Search Part Number</strong></label>
+        <label for="partNumber"><strong>2. Manual Search:</strong></label>
         <div style="display: flex; gap: 10px; margin-top: 5px;">
-            <input type="text" id="partNumber" placeholder="Paste Part Number here..." style="flex-grow: 1; margin: 0;">
-            <button onclick="searchData()">View Data</button>
-            <span id="status" class="loading">⌛ Processing...</span>
+            <input type="text" id="partNumber" placeholder="Enter Part Number (e.g. 148204011)" style="flex-grow: 1;">
+            <button onclick="searchData()">Search Data</button>
+            <span id="status" class="loading">⌛ Loading...</span>
         </div>
     </div>
 
